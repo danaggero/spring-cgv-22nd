@@ -169,6 +169,23 @@ CEOS 22기 백엔드 스터디 - CGV 클론 코딩 프로젝트
 
 ## 2. 매핑 카디널리티 정의하기
 
+### Identifying vs Non-Identifying 관계란?
+
+**식별 관계 (Identifying Relationship)**
+
+- 부모 테이블의 기본 키(PK)를 **자식 테이블의 기본 키(PK)의 일부로** 사용하는 관계
+- 실선으로 표현
+
+**비식별 관계 (Non-Identifying Relationship)**
+
+- 부모 테이블의 기본 키(PK)를 **자식 테이블의 일반 외래 키(FK)로만** 사용하는 관계
+- 점선으로 표현
+
+⇒ 여기선 **Users-Cinema_likes, Cinemas-Cinema_likes, Users-Movie_likes, Movies-Movie_likes, Movies-Movie_stats** 만 **Identifying 관계**
+
+<br>
+
+
 | 관계 (1) | 관계 (N) | 관계 종류 | 설명 |
 | --- | --- | --- | --- |
 | Users | Cinema_Likes | 1:N	 | 한 회원은 여러 영화관을 찜할 수 있다. |
@@ -192,7 +209,8 @@ CEOS 22기 백엔드 스터디 - CGV 클론 코딩 프로젝트
 
 
 ![Cgv-clone.png](images/Cgv-clone.png)
-
+- `VARCHAR`는 **길이 제한이 있는 짧은 글**에, `TEXT`는 **길이 제한이 거의 없는 긴 글**에 사용
+- `FLOAT`나 `DOUBLE` 같은 부동 소수점 타입은 0.1처럼 간단한 소수도 정확하게 표현하지 못하고 근사값으로 저장, `DECIMAL`은 값을 내부적으로 문자열(string)처럼 처리하여 저장하기 때문에 **계산 시 오차가 발생하지 않음**
 <br>
 ---
 
