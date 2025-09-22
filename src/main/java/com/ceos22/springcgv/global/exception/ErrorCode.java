@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.exception;
+package com.ceos22.springcgv.global.exception;
 
 import lombok.Getter;
 

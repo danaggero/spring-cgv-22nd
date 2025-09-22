@@ -26,6 +26,11 @@ public class CinemaLikeService {
         User user = userRepository.findById(userId).orElseThrow();
         Cinema cinema = cinemaRepository.findById(cinemaId).orElseThrow();
 
+        // 중복 확인
+        if (cinemaLikeRepository.findByUserAndCinema(user, cinema).isPresent()) {
+            return;
+        }
+
         CinemaLike newLike = CinemaLike.builder()
                 .user(user)
                 .cinema(cinema)

@@ -26,6 +26,10 @@ public class MovieLikeService {
         User user = userRepository.findById(userId).orElseThrow();
         Movie movie = movieRepository.findById(movieId).orElseThrow();
 
+        if (movieLikeRepository.findByUserAndMovie(user, movie).isPresent()) {
+            return;
+        }
+
         MovieLike newLike = MovieLike.builder()
                 .user(user)
                 .movie(movie)

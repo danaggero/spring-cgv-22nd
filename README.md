@@ -421,36 +421,39 @@ public class MovieLikeId implements Serializable {
 
 - MovieLike 엔티티의 @Id로 선언한 필드명과 동일한 이름과 타입이어야 함
 
-### MovieStat
+
+### CinemaController
 
 ```java
-@Entity
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "movie_stats")
-public class MovieStat {
+@RestController
+@RequiredArgsConstructor
+public class CinemaController {
 
-    @Id
-    @Column(name = "movie_id")
-    private Long id;
+    private final CinemaService cinemaService;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "movie_id")
-    private Movie movie;
-
-    @Column(name = "booking_rate", precision = 4, scale = 1)
-    private BigDecimal bookingRate;
-
-    @Column(name = "cumulative_audience")
-    private int cumulativeAudience;
-
-    @Column(name = "egg_rate")
-    private int eggRate;
+    @GetMapping("/cinemas")
+    public ResponseEntity<List<CinemaDto>> getCinemasByRegion(@RequestParam String region) {
+        List<CinemaDto> cinemas = cinemaService.findCinemasByRegion(region);
+        return ResponseEntity.ok(cinemas);
+    }
 }
 ```
 
-- @MapsId
-  - 부모 엔티티의 ID를 그대로 자신의 ID로 사용
-  - Movies 엔티티의 ID 값을 자신의 PK 값으로 사용
+- 영화관 조회 API
+- GET /cinemas
+- `@RequestParam String region`: URL에 포함된 `?region=값` 형태의 쿼리 파라미터를 `region`이라는 문자열 변수에 담음
+  - ex) http://localhost:8080/cinemas?region=서울
 
+### CinemaRepository
+
+```java
+public interface CinemaRepository extends JpaRepository<Cinema, Long> {
+
+    List<Cinema> findByRegion(String region);
+}
+```
+
+- findAByB
+  - 데이터를 SELECT하는 SQL 쿼리 자동 생성
+- Region
+  - Cinema 엔티티에 있는 region 필드를 검색 조건(WHERE)으로 사용
