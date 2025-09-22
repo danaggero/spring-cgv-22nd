@@ -214,3 +214,243 @@ CEOS 22기 백엔드 스터디 - CGV 클론 코딩 프로젝트
 <br>
 ---
 
+
+# 프로젝트 코드 작성
+
+## 프로젝트 구조
+
+**: 계층형 구조 (Layered Architecture)**
+
+```java
+com
+└── ceos22
+    └── springcgv
+        ├── controller
+        ├── service
+        ├── repository
+        └── domain 
+            ├── User.java
+            └── Movie.java
+```
+
+### BaseEntity
+
+```java
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public abstract class BaseEntity {
+
+    @CreatedDate // 엔티티 생성 시각을 자동 주입
+    @Column(updatable = false) // 생성일은 수정되지 않도록 설정
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate // 엔티티 수정 시각을 자동 주입
+    private LocalDateTime updatedAt;
+}
+
+```
+
+- @MappedSuperclass
+  - 이 클래스는 다른 엔티티에게 필드를 상속해주는 역할만 한다는 것을 명시
+- @EntityListeners(AuditingEntityListener.class)
+  - 생성일/수정일 자동 감지 기능 활성화
+- @CreatedDate
+  - 엔티티 생성 시각을 자동 주입
+- @LastModifiedDate
+  - 엔티티 수정 시각을 자동 주입
+
+### SpringCgvApplication
+
+```java
+@SpringBootApplication
+@EnableJpaAuditing
+public class SpringCgvApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringCgvApplication.class, args);
+	}
+
+}
+
+```
+
+- @EnableJpaAuditing
+  - JPA Auditing 기능 활성화 (Audit: 감시, 검증)
+  - JPA가 엔티티의 생성, 수정 시점을 감지
+  - `@CreatedDate`, `@LastModifiedDate`가 붙은 필드에 현재 시간을 자동으로 주입
+
+### User
+
+```java
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "users")
+public class User extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
+    private long id;
+
+    @Column(unique = true, nullable = false, length = 50)
+    private String username;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false, length = 50)
+    private String name;
+
+    @Column(unique = true, nullable = false, length = 100)
+    private String email;
+
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
+    @Column(unique = true, nullable = false, length = 50)
+    private String nickname;
+
+}
+
+```
+
+- @Entity
+  - JPA의 엔티티임을 나타냄
+- @NoArgsConstructor(access = AccessLevel.PROTECTED)
+  - 파라미터가 없는 기본 생성자를 자동으로 생성
+  - 생성자의 접근 수준을 protected로 지정
+- @Id
+  - 해당 필드가 테이블의 기본 키(Primary Key)임을 나타냄
+- @GeneratedValue(strategy = GenerationType.IDENTITY)
+  - 기본 키의 값을 자동으로 생성
+  - 엔티티의 PK 값을 데이터베이스가 자동으로 생성하도록 위임(AUTO_INCREMENT)
+
+### Movie
+
+```java
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "movies")
+public class Movie extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "movie_id")
+    private Long id;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column(length = 100)
+    private String director;
+
+    private int runtime; // 분 단위
+
+    @Column(name = "release_date")
+    private LocalDate releaseDate;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "age_rating", nullable = false)
+    private AgeRating ageRating;
+
+    @Column(name = "booking_rate", precision = 4, scale = 1)
+    private BigDecimal bookingRate;
+
+    @Column(name = "cumulative_audience")
+    private int cumulativeAudience;
+
+    @Column(name = "egg_rate")
+    private int eggRate;
+}
+
+```
+
+### AgeRating
+
+```java
+public enum AgeRating {
+    ALL, AGE7, AGE12, AGE15, AGE19
+}
+```
+
+### MovieLike
+
+```java
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "movie_likes")
+@IdClass(MovieLike.class)
+public class MovieLike extends BaseEntity {
+
+    @Id
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Id
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "movie_id")
+    private Movie movie;
+}
+```
+
+- @IdClass(MovieLikeId.class)
+  - 복합키를 위한 IdClass
+  - IdClass로 MovieLikeId 클래스를 사용
+  - 복합 기본 키 (user_id, movie_id)
+- @ManyToOne(fetch = FetchType.LAZY)
+  - N : 1에서 N에 해당하는 엔티티가 1에 해당하는 엔티티와 연관 관계를 매핑할 때 사용
+  - 지연 로딩
+
+### MovieLikeId
+
+```java
+@NoArgsConstructor
+@EqualsAndHashCode
+public class MovieLikeId implements Serializable {
+    private Long user; 
+    private Long movie; 
+}
+```
+
+- MovieLike 엔티티의 @Id로 선언한 필드명과 동일한 이름과 타입이어야 함
+
+### MovieStat
+
+```java
+@Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "movie_stats")
+public class MovieStat {
+
+    @Id
+    @Column(name = "movie_id")
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = "movie_id")
+    private Movie movie;
+
+    @Column(name = "booking_rate", precision = 4, scale = 1)
+    private BigDecimal bookingRate;
+
+    @Column(name = "cumulative_audience")
+    private int cumulativeAudience;
+
+    @Column(name = "egg_rate")
+    private int eggRate;
+}
+```
+
+- @MapsId
+  - 부모 엔티티의 ID를 그대로 자신의 ID로 사용
+  - Movies 엔티티의 ID 값을 자신의 PK 값으로 사용
+
