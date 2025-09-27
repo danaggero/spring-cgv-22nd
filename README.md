@@ -457,3 +457,149 @@ public interface CinemaRepository extends JpaRepository<Cinema, Long> {
   - 데이터를 SELECT하는 SQL 쿼리 자동 생성
 - Region
   - Cinema 엔티티에 있는 region 필드를 검색 조건(WHERE)으로 사용
+
+
+---
+
+## 인증과 인가
+
+### 인증 (Authentication)
+
+
+: “누구인지 증명” → 로그인
+
+### 인가 (Authorization)
+
+
+: “접근 권한 확인하고 허가”
+
+### 회사 비유
+
+1. **인증 (Authentication) = 사원증 검사**
+  - 출입 게이트에서 사원증을 태그
+2. **인가 (Authorization) = 부서 접근 권한**
+  - 5F 인사팀 / 7F 개발팀 / 10F 임원실
+
+# 로그인 인증 방식
+
+## 세션 기반 인증 (Stateful)
+
+서버가 사용자의 로그인 상태 정보(세션)를 저장하고 관리하는 방식입니다.
+
+- **동작 방식**
+  1. 사용자가 로그인에 성공하면 서버는 **세션 저장소**에 사용자 정보를 저장하고, 그 저장소에 접근할 수 있는 특별한 **세션 ID**를 생성합니다.
+  2. 서버는 이 세션 ID를 **쿠키**에 담아 사용자 브라우저에 보냅니다.
+  3. 사용자는 이후 모든 요청에 이 세션 ID가 담긴 쿠키를 함께 보냅니다.
+  4. 서버는 쿠키 속 세션 ID를 받아 세션 저장소와 대조하여 사용자를 식별합니다.
+- **특징**: 서버에 사용자의 상태(State)가 저장되기 때문에 **Stateful**하다고 부릅니다.
+
+## JWT 기반 인증 (Stateless)
+
+서버가 사용자의 로그인 상태를 저장하지 않고, 요청에 포함된 토큰만으로 사용자를 식별하는 방식입니다. **JWT(JSON Web Token) 인증**이 가장 대표적인 예입니다.
+
+- **동작 방식**
+  1. 사용자가 로그인에 성공하면 서버는 사용자 정보와 권한, 만료 시간 등을 담은 암호화된 토큰(JWT)을 생성하여 사용자에게 전달합니다.
+  2. 사용자는 이후 모든 요청의 헤더(Header)에 이 토큰을 담아 보냅니다.
+  3. 서버는 토큰의 서명을 검증하여 데이터의 위변조 여부를 확인하고, 토큰 내부의 정보(Payload)를 통해 사용자를 식별합니다. 서버에 별도로 저장된 정보가 필요 없습니다.
+- **특징**: 서버가 상태를 저장하지 않으므로 **Stateless**하다고 부릅니다. 확장성이 뛰어나고 모바일 앱 등 다양한 클라이언트 환경에 적용하기 좋습니다.
+
+### 요약
+| 구분 | **세션 기반 인증** | **토큰 기반 인증 (JWT)** |
+| --- | --- | --- |
+| **상태 저장** | 서버에 저장 (Stateful) | 서버에 저장 안 함 (Stateless) |
+| **인증 정보** | 세션 ID (서버 저장소의 열쇠) | 토큰 자체 (필요 정보가 모두 담김) |
+| **전달 매체** | 주로 쿠키 | 주로 HTTP 헤더 (Authorization) |
+| **확장성** | 다소 불리 (서버 간 세션 공유 필요) | 유리 (토큰만 검증하면 됨) |
+
+
+### 의존성 추가
+
+```java
+	// Spring Security 0.12.16
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+```
+
+### SecurityConfig
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        //csrf disable
+        http
+                .csrf((auth) -> auth.disable());
+
+        //Form 로그인 방식 disable
+        http
+                .formLogin((auth) -> auth.disable());
+
+        //http basic 인증 방식 disable
+        http
+                .httpBasic((auth) -> auth.disable());
+
+        http
+                .authorizeHttpRequests((auth) -> auth
+                        .requestMatchers("/login", "/", "/join").permitAll()
+                        .requestMatchers("/admin").hasRole("ADMIN")
+                        .anyRequest().authenticated());
+
+        //세션 설정
+        http
+                .sessionManagement((session) -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        return http.build();
+    }
+}
+```
+
+```java
+@Component
+public class JWTUtil {
+
+    private SecretKey secretKey;
+
+    public JWTUtil(@Value("${spring.jwt.secret}") String secret) {
+        this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
+    }
+
+    public String getUsername(String token) {
+
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("username", String.class);
+    }
+
+    public String getRole(String token) {
+
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().get("role", String.class);
+    }
+
+    public Boolean isExpired(String token) {
+
+        return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
+    }
+
+    public String createJwt(String username, String role, Long expiredMs) {
+
+        return Jwts.builder()
+                .claim("username", username)
+                .claim("role", role)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiredMs))
+                .signWith(secretKey)
+                .compact();
+    }
+
+
+}
+```

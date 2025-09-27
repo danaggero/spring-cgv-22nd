@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -11,15 +13,35 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+
+        //csrf disable
         http
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(authorize -> authorize
-                        // Swagger UI 관련 경로는 모두 허용
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**").permitAll()
-                        // 다른 모든 요청은 허용
-                        .anyRequest().permitAll()
+                .csrf((auth) -> auth.disable());
+
+        //Form 로그인 방식 disable
+        http
+                .formLogin((auth) -> auth.disable());
+
+        //http basic 인증 방식 disable
+        http
+                .httpBasic((auth) -> auth.disable());
+
+        http
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/signup", "/api/auth/login").permitAll()
+                        .anyRequest().authenticated()
                 );
+
+        //세션 설정
+        http
+                .sessionManagement((session) -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }
