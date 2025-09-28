@@ -589,6 +589,7 @@ public class SecurityConfig {
 
 
 
+### JWTUtil - JWT 발급 및 검증 클래스
 
 ```java
 @Component
@@ -626,6 +627,21 @@ public class JWTUtil {
                 .compact();
     }
 
-
 }
 ```
+
+- JWT 발급과 검증
+  - 로그인 시
+    - 로그인 성공 → JWT 발급
+  - 접근 시
+    - JWT 검증
+- JWT를 암호화하고 서명하는 데 사용할 SecretKey를 생성하고 초기화
+  - JWT 서명에 사용할 알고리즘을 HS256(HMAC SHA-256)으로 지정
+  - secret 문자열은 application.yml 파일에 저장
+- `Jwts.parser().verifyWith(secretKey).build()`
+  - secretKey로 이 토큰의 서명이 유효한지 먼저 검증
+  - 유효하다면 토큰에서 필요한 정보 추출
+- `createJwt(String username, String role, Long expiredMs)`
+  - username, role, 발행시간, 만료시간 정보를 payload에 담음
+  - secretKey를 이용해 서명
+  - header.payload.signature 형태의 압축된 JWT 문자열을 생성
