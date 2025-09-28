@@ -528,41 +528,67 @@ public interface CinemaRepository extends JpaRepository<Cinema, Long> {
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public BCryptPasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  @Bean
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        //csrf disable
-        http
-                .csrf((auth) -> auth.disable());
+    //csrf disable
+    http
+            .csrf((auth) -> auth.disable());
 
-        //Form 로그인 방식 disable
-        http
-                .formLogin((auth) -> auth.disable());
+    //Form 로그인 방식 disable
+    http
+            .formLogin((auth) -> auth.disable());
 
-        //http basic 인증 방식 disable
-        http
-                .httpBasic((auth) -> auth.disable());
+    //http basic 인증 방식 disable
+    http
+            .httpBasic((auth) -> auth.disable());
 
-        http
-                .authorizeHttpRequests((auth) -> auth
-                        .requestMatchers("/login", "/", "/join").permitAll()
-                        .requestMatchers("/admin").hasRole("ADMIN")
-                        .anyRequest().authenticated());
+    http
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/", "/api/auth/signup", "/api/auth/login").permitAll()
+                    .anyRequest().authenticated()
+            );
 
-        //세션 설정
-        http
-                .sessionManagement((session) -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+    //세션 설정
+    http
+            .sessionManagement((session) -> session
+                    .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
-        return http.build();
-    }
+    return http.build();
+  }
 }
 ```
+- `@EnableWebSecurity`
+  - **SpringSecurityFilterChain 등록**: 웹 요청을 가로채 보안 처리를 담당하는 `springSecurityFilterChain`이라는 이름의 서블릿 필터(Servlet Filter)를 스프링 컨테이너에 등록
+    - 서블릿 필터(Servlet Filter): 클라이언트의 요청(Request)이 서블릿(Servlet)에 도달하기 전과, 서블릿의 응답(Response)이 클라이언트에게 전달되기 전에 거치는 필터
+    - 로그인 체크, 권한 검사, 요청/응답에 대한 로그 기록, Input/Output 데이터 가공, 인코딩 처리
+  - 모든 요청에 대해 인증(Authentication) 요구
+  - 폼 기반 로그인(Form-based Login) 및 HTTP Basic 인증 활성화
+  - 세션 관리, CSRF(Cross-Site Request Forgery) 방어, 헤더 보안 설정 등
+- **SpringSecurityFilterChain**
+  - HTTP 요청 → 서블릿 컨테이너(WAS) →  **Security Filter Chain** (필터1 →  필터2 →  ...) →  DispatcherServlet →  컨트롤러
+
+- `BCryptPasswordEncoder`
+  - Spring Security가 제공하는 BCrypt 해싱 알고리즘을 Bean으로 등록
+
+- `csrf.disable()`: 세션 기반 공격인 CSRF 공격 방어 기능을 disable.
+- `formLogin.disable()`: 폼(Form) 기반의 로그인 페이지 관련 기능 disable.
+- `httpBasic.disable()`: HTTP Basic 인증 방식 disable.
+
+- `.requestMatchers("/", "/api/auth/signup", "/api/auth/login").permitAll()`
+  - `"/", "/api/auth/signup", "/api/auth/login"` 경로로 들어오는 요청은 누구나 접근할 수 있도록 허용함. (인증 불필요)
+  - 회원가입/로그인은 인증 전 상태에서 접근해야 함
+
+- `.sessionCreationPolicy(SessionCreationPolicy.STATELESS)`
+  - 서버가 세션을 생성하거나 사용하지 않도록 설정 (Stateless 방식)
+
+
+
 
 ```java
 @Component
