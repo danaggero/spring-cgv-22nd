@@ -645,3 +645,276 @@ public class JWTUtil {
   - username, role, 발행시간, 만료시간 정보를 payload에 담음
   - secretKey를 이용해 서명
   - header.payload.signature 형태의 압축된 JWT 문자열을 생성
+
+
+### CustomUserDetails - UserDetails 구현체
+
+```java
+public class CustomUserDetails implements UserDetails {
+
+    private User user;
+
+    public CustomUserDetails(User user){
+        this.user = user;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+
+        Collection<GrantedAuthority> collection = new ArrayList<>();
+
+        collection.add(new GrantedAuthority() {
+            @Override
+            public String getAuthority() {
+
+                return user.getRole().name();
+            }
+        });
+
+        return collection;
+    }
+
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
+
+    @Override
+    public String getUsername() {
+        return user.getUsername();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+}
+```
+
+- `User` 엔티티 객체를 스프링 시큐리티가 이해할 수 있는 `UserDetails` 타입으로 변환해주는 역할
+- 스프링 시큐리티는 인증 과정에서 `UserDetails` 객체의 정보를 사용하여 비밀번호를 비교하고 권한을 확인함
+- `public Collection<? extends GrantedAuthority> getAuthorities()`
+  - 해당 유저가 가지고 있는 권한 목록을 반환
+- `getPassword()`, `getUsername()`, `isAccountNonExpired()`
+  - 인증 정보 제공
+  - 계정 상태 정보 제공
+  - UserDetails 인터페이스의 메서드 필수적으로  overriding 해야함
+
+### CustomUserDetailsService - UserDetailsService 구현체
+
+```java
+@Service
+@RequiredArgsConstructor
+public class CustomUserDetailsService implements UserDetailsService {
+
+    private final UserRepository userRepository;
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+        User userData = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("해당 유저를 찾을 수 없습니다: " + username));
+
+        return new CustomUserDetails(userData);
+    }
+}
+```
+
+- 스프링 시큐리티가 사용자 인증을 할 때 필요한 유저 정보를 DB에서 조회하는 클래스
+- `loadUserByUsername(String username)`
+  - 스프링 시큐리티가 로그인을 시도하는 유저의 `username` 을 이 메서드로 전달
+  - DB에서 유저 조회
+  - `User` 엔티티 객체를 이전에 만들었던 `CustomUserDetails` 객체로 변환해서 반환
+
+### LoginFilter - UsernamePasswordAuthenticationFilter 구현체
+
+```java
+public class LoginFilter extends UsernamePasswordAuthenticationFilter {
+
+    private final AuthenticationManager authenticationManager;
+    private final JWTUtil jwtUtil;
+
+    public LoginFilter(AuthenticationManager authenticationManager, JWTUtil jwtUtil) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+        // 로그인 요청 URL
+        setFilterProcessesUrl("/api/auth/login");
+    }
+
+    // 로그인 요청 시 호출되어 인증을 시도하는 메서드
+    @Override
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+        try {
+            // JSON을 LoginRequestDto 객체로 변환
+            ObjectMapper objectMapper = new ObjectMapper();
+            LoginRequestDto loginRequestDto = objectMapper.readValue(request.getInputStream(), LoginRequestDto.class);
+
+            String username = loginRequestDto.getUsername();
+            String password = loginRequestDto.getPassword();
+
+            // 스프링 시큐리티에서 사용할 인증 토큰(UsernamePasswordAuthenticationToken) 생성
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, password, null);
+
+            // AuthenticationManager에게 인증을 위임
+            return authenticationManager.authenticate(authToken);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // 인증 성공 시 호출되는 메서드
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+        // CustomUserDetails를 추출
+        CustomUserDetails customUserDetails = (CustomUserDetails) authResult.getPrincipal();
+
+        // 사용자 이름과 역할을 추출
+        String username = customUserDetails.getUsername();
+        Collection<? extends GrantedAuthority> authorities = authResult.getAuthorities();
+        Iterator<? extends GrantedAuthority> iterator = authorities.iterator();
+        GrantedAuthority auth = iterator.next();
+        String role = auth.getAuthority();
+
+        long expireMs = 60 * 60 * 1000L; // 1시간
+        String token = jwtUtil.createJwt(username, role, expireMs);
+
+        response.addHeader("Authorization", "Bearer " + token); // Authorization: Bearer [토큰값]
+        response.setStatus(HttpServletResponse.SC_OK); // 200 OK
+    }
+
+    // 인증 실패 시 호출되는 메서드
+    @Override
+    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+    }
+}
+```
+
+- 사용자의 로그인 요청(`POST /login`)을 직접 처리하여 인증을 수행하고, 성공 시 JWT를 발급
+- Form Login Filter를 disable 시켰기 때문에 `UsernamePasswordAuthenticationFilter` 커스텀 구현 필요
+- 필터 등록
+
+### SecurityConfig
+
+```java
+    http
+            .addFilterAt(new LoginFilter(authenticationManager(authenticationConfiguration)), UsernamePasswordAuthenticationFilter.class);
+
+```
+
+### JWTFilter
+
+```java
+package com.ceos22.springcgv.config.jwt;
+
+import com.ceos22.springcgv.config.CustomUserDetails;
+import com.ceos22.springcgv.domain.User;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+
+public class JWTFilter extends OncePerRequestFilter {
+
+    private final JWTUtil jwtUtil;
+
+    public JWTFilter(JWTUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+
+        //request에서 Authorization 헤더를 찾음
+        String authorization= request.getHeader("Authorization");
+
+        //Authorization 헤더 검증
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+
+            System.out.println("token null");
+            filterChain.doFilter(request, response);
+
+            //조건이 해당되면 메소드 종료
+            return;
+        }
+
+        //Bearer 부분 제거 후 순수 토큰만 획득
+        String token = authorization.split(" ")[1];
+
+        //토큰 소멸 시간 검증
+        if (jwtUtil.isExpired(token)) {
+
+            System.out.println("token expired");
+            filterChain.doFilter(request, response);
+
+            return;
+        }
+
+        //토큰에서 username과 role 획득
+        String username = jwtUtil.getUsername(token);
+        String role = jwtUtil.getRole(token);
+
+        //user를 생성하여 값 set
+        User user = User.builder()
+                .username(username)
+                .password(null) // 임시 비밀번호
+                .role(User.Role.valueOf(role))
+                .build();
+
+        //UserDetails에 회원 정보 객체 담기
+        CustomUserDetails customUserDetails = new CustomUserDetails(user);
+
+        //스프링 시큐리티 인증 토큰 생성
+        Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
+        //세션에 사용자 등록
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        filterChain.doFilter(request, response);
+
+    }
+}
+
+```
+
+- 클라이언트가 로그인 이후에 보내는 모든 요청을 가로채서, 요청에 포함된 JWT가 유효한지 검증하는 클래스
+- 요청의 `Authorization` 헤더를 확인
+  - 헤더가 없거나, Bearer  로 시작하지 않으면 `doFilter(request, response)` 로 다음 체인으로 넘기고 메서드 종료
+- 토큰 만료 여부 확인
+- 토큰이 검증되면(JWTUtil), 토큰의 payload에 저장된 `username`과 `role` 정보를 꺼냄
+- 임시 User 및 UserDetails 생성
+  - 토큰에서 꺼낸 정보를 바탕으로 `UserDetails` 객체(`customUserDetails`) 생성
+- `CustomUserDetails`를 사용하여 `Authentication` 객체 생성
+- 이 객체를 `SecurityContextHolder`에 저장
+  - `SecurityContextHolder` 에 저장된  `Authentication` 객체는 애플리케이션의 어디서든 현재 로그인한 사용자의 정보를 쉽게 꺼내 쓸 수 있음
+
+### SecurityConfig
+
+```java
+        http
+                .addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
+```
+
+- LoginFilter 앞에 JWTFilter 등록
+
+

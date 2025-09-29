@@ -20,12 +20,10 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JWTUtil jwtUtil;
 
-    @Value("${spring.jwt.access-validity-seconds:900}")
-    private long accessValiditySeconds; // 15분
 
     public void signUp(SignUpRequestDto req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        if (userRepository.existsByUsername(req.getUsername())) {
+            throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
         }
         if (userRepository.existsByNickname(req.getNickname())) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
@@ -42,16 +40,4 @@ public class AuthService {
         userRepository.save(user);
     }
 
-    public TokenResponseDto login(LoginRequestDto req) {
-        var user = userRepository.findByEmail(req.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
-        if (!passwordEncoder.matches(req.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-        }
-
-        long expireMs = accessValiditySeconds * 1000L;
-
-        String token = jwtUtil.createJwt(user.getEmail(), user.getRole().name(), expireMs);
-        return new TokenResponseDto(token, accessValiditySeconds);
-    }
 }

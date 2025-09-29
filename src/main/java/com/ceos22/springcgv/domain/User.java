@@ -2,13 +2,11 @@
 
     import com.ceos22.springcgv.domain.common.BaseEntity;
     import jakarta.persistence.*;
-    import lombok.AccessLevel;
-    import lombok.Builder;
-    import lombok.Getter;
-    import lombok.NoArgsConstructor;
+    import lombok.*;
 
     @Entity
     @Getter
+    @Setter
     @NoArgsConstructor
     @Table(name = "users")
     public class User extends BaseEntity {
@@ -37,11 +35,11 @@
         private String nickname;
 
         @Enumerated(EnumType.STRING)
-        @Column(nullable = false, length = 20)
-        private Role role = Role.USER;
+        @Column(nullable = false, length = 50)
+        private Role role = Role.ROLE_USER;
 
         public enum Role {
-            USER, ADMIN
+            ROLE_USER, ROLE_ADMIN
         }
 
         @Builder
