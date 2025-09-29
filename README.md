@@ -512,6 +512,35 @@ public interface CinemaRepository extends JpaRepository<Cinema, Long> {
 | **확장성** | 다소 불리 (서버 간 세션 공유 필요) | 유리 (토큰만 검증하면 됨) |
 
 
+### Access Token (접근 토큰)
+
+- **역할**: **실제 API 요청 권한을 증명**하는 단기 출입증입니다.
+- **특징**:
+  - **짧은 유효기간**: 보안을 위해 유효기간이 짧습니다. (예: 30분, 1시간)
+  - **정보 포함**: 사용자 ID, 권한 등 필요한 정보를 담고 있습니다.
+  - **탈취 위험**: 만약 이 토큰이 탈취되더라도, 유효기간이 짧아 피해를 최소화할 수 있습니다.
+- **사용**: 사용자는 API를 요청할 때마다 이 Access Token을 헤더에 담아 보냅니다.
+
+### Refresh Token (재발급 토큰)
+
+- **역할**: **새로운 Access Token을 발급받기 위해** 사용하는 장기 출입증입니다.
+- **특징**:
+  - **긴 유효기간**: Access Token보다 훨씬 긴 유효기간을 가집니다. (예: 7일, 30일)
+  - **보안된 저장**: 탈취되면 위험하므로, 서버의 안전한 DB나 클라이언트의 보안 스토리지에 저장됩니다.
+  - **사용 최소화**: 실제 API 요청에는 사용되지 않고, 오직 Access Token이 만료되었을 때 **새 Access Token을 발급받는 용도**로만 사용됩니다.
+
+### **동작 방식**
+
+1. **최초 로그인**: 사용자가 로그인하면, 서버는 **Access Token**과 **Refresh Token**을 **모두** 발급합니다.
+2. **API 요청**: 사용자는 **Access Token**을 사용하여 API를 요청합니다.
+3. **Access Token 만료**: 시간이 지나 Access Token이 만료되면, API 요청이 거부됩니다.
+4. **토큰 재발급**: 사용자는 가지고 있던 **Refresh Token**을 서버의 재발급 API로 보냅니다.
+5. **재발급 성공**: 서버는 Refresh Token이 유효한지 확인하고, 새로운 **Access Token**을 발급해 줍니다. 사용자는 다시 로그인할 필요 없이 API 요청을 계속할 수 있습니다.
+
+---
+
+## 구현
+
 ### 의존성 추가
 
 ```java
@@ -551,6 +580,7 @@ public class SecurityConfig {
     http
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/", "/api/auth/signup", "/api/auth/login").permitAll()
+                    .requestMatchers("/admin/**").hasRole("ROLE_ADMIN")
                     .anyRequest().authenticated()
             );
 
@@ -562,6 +592,7 @@ public class SecurityConfig {
     return http.build();
   }
 }
+
 ```
 - `@EnableWebSecurity`
   - **SpringSecurityFilterChain 등록**: 웹 요청을 가로채 보안 처리를 담당하는 `springSecurityFilterChain`이라는 이름의 서블릿 필터(Servlet Filter)를 스프링 컨테이너에 등록
@@ -571,7 +602,35 @@ public class SecurityConfig {
   - 폼 기반 로그인(Form-based Login) 및 HTTP Basic 인증 활성화
   - 세션 관리, CSRF(Cross-Site Request Forgery) 방어, 헤더 보안 설정 등
 - **SpringSecurityFilterChain**
-  - HTTP 요청 → 서블릿 컨테이너(WAS) →  **Security Filter Chain** (필터1 →  필터2 →  ...) →  DispatcherServlet →  컨트롤러
+  - HTTP 요청 → 서블릿 컨테이너(WAS) → DelegatingFilterProxy →  **Security Filter Chain** (필터1 →  필터2 →  ...) →  DispatcherServlet →  컨트롤러
+- **DelegatingFilterProxy**
+  - 서블릿 컨테이너가 관리하는 **DelegatingFilterProxy** 와 스프링 컨테이너가 관리하는 **Security Filter Chain** 연결
+
+
+  - 동작 원리
+    1. DelegatingFilterProxy 가 Servlet Container 로 넘어온 사용자의 요청을 받음
+    2. DelegatingFilterProxy 는 SpringSecurityFilterChain 이름으로 생성된 Bean 을 ApplicationContext 에서 찾음
+    3. Bean 을 찾으면 SpringSecurityFilterChain 으로 요청을 위임
+
+  ### 기본 필터의 종류와 실행 순서
+
+  스프링 시큐리티는 기본적으로 10개 이상의 필터를 체인에 등록
+
+  1. `SecurityContextHolderFilter`
+    - 모든 요청의 시작과 끝에서 `SecurityContext`를 생성하고 정리함
+    - `SecurityContextHolder`에 대한 접근을 설정하는 매우 기본적인 필터
+  2. `LogoutFilter`
+    - 설정된 로그아웃 URL(기본값: `/logout`)로 오는 요청을 감시하고, 해당 요청이 오면 사용자를 로그아웃 처리함
+  3. `CsrfFilter`
+    - CSRF 토큰을 검증하여 세션 기반의 위조 공격을 방어. (JWT 방식에서는 보통 비활성화)
+  4. `UsernamePasswordAuthenticationFilter`
+    - 설정된 로그인 URL(기본값: `/login`)로 오는 아이디/비밀번호 요청을 처리하여 사용자를 인증
+  5. `BasicAuthenticationFilter`
+    - HTTP Basic 인증 헤더가 있는지 확인하고, 있다면 인증을 처리
+  6. `ExceptionTranslationFilter`
+    - 필터 체인에서 발생하는 `AuthenticationException`(인증 실패)이나 `AccessDeniedException`(인가 실패)을 감지하고 처리 예를 들어, 인증되지 않은 사용자라면 로그인 페이지로 보내거나 401 오류를 반환
+  7. `AuthorizationFilter`
+    - `SecurityConfig`에 설정된 `authorizeHttpRequests` 규칙(`hasRole`, `permitAll` 등)을 기반으로, 사용자가 해당 요청에 접근할 권한이 있는지 최종적으로 확인(인가)
 
 - `BCryptPasswordEncoder`
   - Spring Security가 제공하는 BCrypt 해싱 알고리즘을 Bean으로 등록
@@ -586,8 +645,7 @@ public class SecurityConfig {
 
 - `.sessionCreationPolicy(SessionCreationPolicy.STATELESS)`
   - 서버가 세션을 생성하거나 사용하지 않도록 설정 (Stateless 방식)
-
-
+  
 
 ### JWTUtil - JWT 발급 및 검증 클래스
 
@@ -629,6 +687,7 @@ public class JWTUtil {
 
 }
 ```
+
 
 - JWT 발급과 검증
   - 로그인 시
