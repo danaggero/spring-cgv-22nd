@@ -603,6 +603,9 @@ public class SecurityConfig {
   - 세션 관리, CSRF(Cross-Site Request Forgery) 방어, 헤더 보안 설정 등
 - **SpringSecurityFilterChain**
   - HTTP 요청 → 서블릿 컨테이너(WAS) → DelegatingFilterProxy →  **Security Filter Chain** (필터1 →  필터2 →  ...) →  DispatcherServlet →  컨트롤러
+ <img width="1700" height="1014" alt="image" src="https://github.com/user-attachments/assets/5bb9c098-2314-4087-a304-38a36756c56b" />
+
+
 - **DelegatingFilterProxy**
   - 서블릿 컨테이너가 관리하는 **DelegatingFilterProxy** 와 스프링 컨테이너가 관리하는 **Security Filter Chain** 연결
 
