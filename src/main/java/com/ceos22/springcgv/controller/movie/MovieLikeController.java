@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.controller;
+package com.ceos22.springcgv.controller.movie;
 
 import com.ceos22.springcgv.service.MovieLikeService;
 import lombok.RequiredArgsConstructor;

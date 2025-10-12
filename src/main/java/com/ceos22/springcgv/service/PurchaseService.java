@@ -18,7 +18,7 @@ public class PurchaseService {
     private final PurchaseDetailRepository purchaseDetailRepository;
     private final UserRepository userRepository;
     private final CinemaRepository cinemaRepository;
-    private final ConcessionItemRepository itemRepository;
+    private final SnackItemRepository itemRepository;
     private final InventoryRepository inventoryRepository;
 
     @Transactional
@@ -30,7 +30,7 @@ public class PurchaseService {
         // 재고 확인 및 차감, 총 가격 계산
         BigDecimal totalPrice = new BigDecimal(0);
         for (PurchaseItemDto itemDto : requestDto.getItems()) {
-            ConcessionItem item = itemRepository.findById(itemDto.getItemId()).orElseThrow(() -> new IllegalArgumentException("상품 없음"));
+            SnackItem item = itemRepository.findById(itemDto.getItemId()).orElseThrow(() -> new IllegalArgumentException("상품 없음"));
             Inventory inventory = inventoryRepository.findByCinemaAndItem(cinema, item)
                     .orElseThrow(() -> new IllegalArgumentException("재고 정보 없음"));
 
@@ -55,7 +55,7 @@ public class PurchaseService {
 
         // 구매 상세 정보 저장
         for (PurchaseItemDto itemDto : requestDto.getItems()) {
-            ConcessionItem item = itemRepository.findById(itemDto.getItemId()).get();
+            SnackItem item = itemRepository.findById(itemDto.getItemId()).get();
             PurchaseDetail detail = PurchaseDetail.builder()
                     .purchase(purchase)
                     .item(item)

@@ -1,6 +1,7 @@
 package com.ceos22.springcgv.domain;
 
 import com.ceos22.springcgv.domain.common.BaseEntity;
+import com.ceos22.springcgv.domain.enums.Region;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -23,6 +24,7 @@ public class Cinema extends BaseEntity {
     @Column(nullable = false)
     private String address;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    private String region;
+    private Region region;
 }

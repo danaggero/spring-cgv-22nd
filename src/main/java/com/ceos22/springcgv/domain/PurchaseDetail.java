@@ -24,13 +24,13 @@ public class PurchaseDetail extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", nullable = false)
-    private ConcessionItem item;
+    private SnackItem item;
 
     @Column(nullable = false)
     private int quantity;
 
     @Builder
-    public PurchaseDetail(Purchase purchase, ConcessionItem item, int quantity) {
+    public PurchaseDetail(Purchase purchase, SnackItem item, int quantity) {
         this.purchase = purchase;
         this.item = item;
         this.quantity = quantity;

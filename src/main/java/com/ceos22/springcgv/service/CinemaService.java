@@ -1,7 +1,7 @@
 package com.ceos22.springcgv.service;
 
 import com.ceos22.springcgv.domain.Cinema;
-import com.ceos22.springcgv.dto.CinemaDto;
+import com.ceos22.springcgv.dto.cinema.CinemaDto;
 import com.ceos22.springcgv.repository.CinemaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +18,8 @@ public class CinemaService {
 
     /**
      * 특정 지역의 모든 영화관 목록을 조회하는 메서드
+     * @param region 조회할 지역
+     * @return 해당 지역의 영화관 DTO 리스트
      */
     @Transactional(readOnly = true)
     public List<CinemaDto> findCinemasByRegion(String region) {

@@ -7,7 +7,7 @@ import java.io.Serializable;
 
 @NoArgsConstructor
 @EqualsAndHashCode
-public class CinemaLikeId implements Serializable {
+public class CinemaLikeId implements Serializable { // 복합 기본키 클래스
 
     private Long user;
 

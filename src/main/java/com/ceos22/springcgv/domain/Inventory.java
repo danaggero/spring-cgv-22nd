@@ -1,10 +1,14 @@
 package com.ceos22.springcgv.domain;
 
 import com.ceos22.springcgv.domain.common.BaseEntity;
+import com.ceos22.springcgv.global.exception.CustomException;
+import com.ceos22.springcgv.global.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import static com.ceos22.springcgv.global.exception.ErrorCode.SNACK_NO_STOCK;
 
 @Entity
 @Getter
@@ -23,7 +27,7 @@ public class Inventory extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", nullable = false)
-    private ConcessionItem item;
+    private SnackItem item;
 
     @Column(nullable = false)
     private int quantity;
@@ -31,7 +35,7 @@ public class Inventory extends BaseEntity {
     //== 비즈니스 로직 ==//
     public void decreaseQuantity(int quantity) {
         if (this.quantity - quantity < 0) {
-            throw new IllegalStateException("재고가 부족합니다.");
+            throw new CustomException(ErrorCode.SNACK_NO_STOCK);
         }
         this.quantity -= quantity;
     }

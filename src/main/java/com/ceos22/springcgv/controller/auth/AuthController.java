@@ -1,8 +1,6 @@
-package com.ceos22.springcgv.controller;
+package com.ceos22.springcgv.controller.auth;
 
-import com.ceos22.springcgv.dto.LoginRequestDto;
 import com.ceos22.springcgv.dto.SignUpRequestDto;
-import com.ceos22.springcgv.dto.TokenResponseDto;
 import com.ceos22.springcgv.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,7 @@
 package com.ceos22.springcgv.domain;
 
 import com.ceos22.springcgv.domain.common.BaseEntity;
+import com.ceos22.springcgv.domain.id.MovieLikeId;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

@@ -1,6 +1,7 @@
-package com.ceos22.springcgv.controller;
+package com.ceos22.springcgv.controller.cinema;
 
-import com.ceos22.springcgv.dto.CinemaDto;
+import com.ceos22.springcgv.dto.cinema.CinemaDto;
+import com.ceos22.springcgv.global.response.ApiResponse;
 import com.ceos22.springcgv.service.CinemaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +18,10 @@ public class CinemaController {
     private final CinemaService cinemaService;
 
     @GetMapping("/cinemas")
-    public ResponseEntity<List<CinemaDto>> getCinemasByRegion(@RequestParam String region) {
+    public ResponseEntity<ApiResponse<List<CinemaDto>>> getCinemasByRegion(@RequestParam String region) { // cgv '상영관 보기' clone
         List<CinemaDto> cinemas = cinemaService.findCinemasByRegion(region);
-        return ResponseEntity.ok(cinemas);
+        ApiResponse<List<CinemaDto>> response = ApiResponse.success(200, "지역별 영화관 조회 성공", cinemas);
+
+        return ResponseEntity.ok(response);
     }
 }

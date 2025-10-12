@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.id;
 
 import java.io.Serializable;
 import lombok.EqualsAndHashCode;
