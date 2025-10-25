@@ -1,6 +1,7 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.purchase;
 
 import com.ceos22.springcgv.domain.common.BaseEntity;
+import com.ceos22.springcgv.domain.snack.SnackItem;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.dto;
+package com.ceos22.springcgv.dto.movie;
 
 import com.ceos22.springcgv.domain.movie.Movie;
 import com.ceos22.springcgv.domain.enums.AgeRating;

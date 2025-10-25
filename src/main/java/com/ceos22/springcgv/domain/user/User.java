@@ -1,4 +1,4 @@
-    package com.ceos22.springcgv.domain;
+    package com.ceos22.springcgv.domain.user;
 
     import com.ceos22.springcgv.domain.common.BaseEntity;
     import jakarta.persistence.*;
@@ -28,8 +28,8 @@
         @Column(unique = true, nullable = false, length = 100)
         private String email;
 
-        @Column(name = "phone_number", length = 20)
-        private String phoneNumber;
+        @Column(name = "phone", length = 20)
+        private String phone;
 
         @Column(unique = true, nullable = false, length = 50)
         private String nickname;
@@ -43,13 +43,13 @@
         }
 
         @Builder
-        private User(String username, String password, String name,
-                     String email, String phoneNumber, String nickname, Role role) {
+        private User(Long id, String username, String password, String name, String email, String phone, String nickname, Role role) {
+            this.id = id;
             this.username = username;
             this.password = password;
             this.name = name;
             this.email = email;
-            this.phoneNumber = phoneNumber;
+            this.phone = phone;
             this.nickname = nickname;
             if (role != null) this.role = role;
         }

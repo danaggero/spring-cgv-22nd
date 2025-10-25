@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.dto;
+package com.ceos22.springcgv.dto.booking;
 
 import com.ceos22.springcgv.domain.booking.Booking;
 import com.ceos22.springcgv.domain.enums.BookingStatus;

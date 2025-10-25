@@ -1,6 +1,5 @@
-package com.ceos22.springcgv.dto;
+package com.ceos22.springcgv.dto.user;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

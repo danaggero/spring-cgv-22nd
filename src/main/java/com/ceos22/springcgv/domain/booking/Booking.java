@@ -1,5 +1,7 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.booking;
 
+import com.ceos22.springcgv.domain.showing.Showing;
+import com.ceos22.springcgv.domain.user.User;
 import com.ceos22.springcgv.domain.common.BaseEntity;
 import com.ceos22.springcgv.domain.enums.BookingStatus;
 import jakarta.persistence.*;

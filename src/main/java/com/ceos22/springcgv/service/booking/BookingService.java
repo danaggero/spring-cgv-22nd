@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.service;
+package com.ceos22.springcgv.service.booking;
 
 import com.ceos22.springcgv.domain.booking.BookedSeat;
 import com.ceos22.springcgv.domain.booking.Booking;

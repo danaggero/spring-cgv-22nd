@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.service;
+package com.ceos22.springcgv.service.user;
 
 import com.ceos22.springcgv.config.CustomUserDetails;
 import com.ceos22.springcgv.domain.user.User;

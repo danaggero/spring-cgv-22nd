@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.snack;
 
 import com.ceos22.springcgv.domain.common.BaseEntity;
 import jakarta.persistence.*;
@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "concession_items")
+@Table(name = "snack_items")
 public class SnackItem extends BaseEntity {
 
     @Id

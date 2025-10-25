@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.dto;
+package com.ceos22.springcgv.dto.purchase;
 
 import lombok.Getter;
 import java.util.List;

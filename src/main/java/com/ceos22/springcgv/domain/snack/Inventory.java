@@ -1,5 +1,6 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.snack;
 
+import com.ceos22.springcgv.domain.cinema.Cinema;
 import com.ceos22.springcgv.domain.common.BaseEntity;
 import com.ceos22.springcgv.global.exception.CustomException;
 import com.ceos22.springcgv.global.exception.ErrorCode;
@@ -7,8 +8,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import static com.ceos22.springcgv.global.exception.ErrorCode.SNACK_NO_STOCK;
 
 @Entity
 @Getter

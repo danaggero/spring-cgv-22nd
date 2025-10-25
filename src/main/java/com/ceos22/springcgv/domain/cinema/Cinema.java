@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.cinema;
 
 import com.ceos22.springcgv.domain.common.BaseEntity;
 import com.ceos22.springcgv.domain.enums.Region;

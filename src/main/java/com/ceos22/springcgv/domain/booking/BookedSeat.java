@@ -1,5 +1,6 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.booking;
 
+import com.ceos22.springcgv.domain.seat.Seat;
 import com.ceos22.springcgv.domain.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

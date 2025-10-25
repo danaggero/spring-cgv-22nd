@@ -1,5 +1,7 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.purchase;
 
+import com.ceos22.springcgv.domain.user.User;
+import com.ceos22.springcgv.domain.cinema.Cinema;
 import com.ceos22.springcgv.domain.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

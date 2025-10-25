@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.repository;
+package com.ceos22.springcgv.repository.seat;
 
 import com.ceos22.springcgv.domain.booking.BookedSeat;
 import com.ceos22.springcgv.domain.booking.Booking;

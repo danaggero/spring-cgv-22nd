@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.repository;
+package com.ceos22.springcgv.repository.cinema;
 
 import com.ceos22.springcgv.domain.cinema.Cinema;
 import com.ceos22.springcgv.domain.cinema.CinemaLike;

@@ -1,5 +1,6 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.seat;
 
+import com.ceos22.springcgv.domain.screen.ScreenType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

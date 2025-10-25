@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.screen;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.dto;
+package com.ceos22.springcgv.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

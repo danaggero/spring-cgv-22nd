@@ -1,6 +1,8 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.showing;
 
 import com.ceos22.springcgv.domain.common.BaseEntity;
+import com.ceos22.springcgv.domain.movie.Movie;
+import com.ceos22.springcgv.domain.screen.Screen;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

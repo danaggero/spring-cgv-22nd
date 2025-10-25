@@ -1,5 +1,6 @@
-package com.ceos22.springcgv.domain;
+package com.ceos22.springcgv.domain.movie;
 
+import com.ceos22.springcgv.domain.user.User;
 import com.ceos22.springcgv.domain.common.BaseEntity;
 import com.ceos22.springcgv.domain.id.MovieLikeId;
 import jakarta.persistence.*;

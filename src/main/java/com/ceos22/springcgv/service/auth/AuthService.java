@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.service;
+package com.ceos22.springcgv.service.auth;
 
 
 import com.ceos22.springcgv.config.jwt.JWTUtil;

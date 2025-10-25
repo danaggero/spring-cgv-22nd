@@ -1,6 +1,6 @@
 package com.ceos22.springcgv.controller.movie;
 
-import com.ceos22.springcgv.service.MovieLikeService;
+import com.ceos22.springcgv.service.movie.MovieLikeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

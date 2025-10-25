@@ -1,9 +1,14 @@
 package com.ceos22.springcgv.controller.auth;
 
-import com.ceos22.springcgv.dto.SignUpRequestDto;
-import com.ceos22.springcgv.service.AuthService;
+import com.ceos22.springcgv.dto.user.LoginRequestDto;
+import com.ceos22.springcgv.dto.user.SignUpRequestDto;
+import com.ceos22.springcgv.global.exception.CustomException;
+import com.ceos22.springcgv.global.exception.ErrorCode;
+import com.ceos22.springcgv.global.response.ApiResponse;
+import com.ceos22.springcgv.service.auth.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,13 +23,15 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/signup")
-    public ResponseEntity<Void> signUp(@RequestBody @Valid SignUpRequestDto req) {
+    public ResponseEntity<ApiResponse<Void>> signUp(@RequestBody @Valid SignUpRequestDto req) {
         authService.signUp(req);
-        return ResponseEntity.ok().build();
+        ApiResponse<Void> body = ApiResponse.success(201, "회원가입 성공");
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
-//    @PostMapping("/login")
-//    public ResponseEntity<TokenResponseDto> login(@RequestBody @Valid LoginRequestDto req) {
-//        return ResponseEntity.ok(authService.login(req));
-//    }
+    @PostMapping("/login")
+    public ResponseEntity<Void> login(@RequestBody @Valid LoginRequestDto req) {
+        //로그인 필터가 요청 가로챔
+        throw new CustomException(ErrorCode.NOT_FOUND);
+    }
 }

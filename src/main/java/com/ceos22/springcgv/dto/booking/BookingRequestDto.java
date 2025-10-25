@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.dto;
+package com.ceos22.springcgv.dto.booking;
 
 import lombok.Getter;
 import java.util.List;

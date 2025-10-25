@@ -1,4 +1,4 @@
-package com.ceos22.springcgv.repository;
+package com.ceos22.springcgv.repository.user;
 
 import com.ceos22.springcgv.domain.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
