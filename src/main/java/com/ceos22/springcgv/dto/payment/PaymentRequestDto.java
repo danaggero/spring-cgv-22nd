@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PaymentRequest {
+public class PaymentRequestDto {
     private String storeId;
     private String orderName;
     private Integer totalPayAmount;

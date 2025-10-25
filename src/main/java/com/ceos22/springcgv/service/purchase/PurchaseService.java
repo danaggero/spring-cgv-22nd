@@ -6,8 +6,9 @@ import com.ceos22.springcgv.domain.purchase.PurchaseDetail;
 import com.ceos22.springcgv.domain.snack.Inventory;
 import com.ceos22.springcgv.domain.snack.SnackItem;
 import com.ceos22.springcgv.domain.user.User;
-import com.ceos22.springcgv.dto.payment.PaymentRequest;
-import com.ceos22.springcgv.dto.payment.PaymentResponse;
+import com.ceos22.springcgv.dto.payment.PaymentCancelResponseDto;
+import com.ceos22.springcgv.dto.payment.PaymentRequestDto;
+import com.ceos22.springcgv.dto.payment.PaymentResponseDto;
 import com.ceos22.springcgv.dto.purchase.PurchaseItemDto;
 import com.ceos22.springcgv.dto.purchase.PurchaseRequestDto;
 import com.ceos22.springcgv.external.payment.PaymentClient;
@@ -70,7 +71,7 @@ public class PurchaseService {
         String paymentId = generatePaymentId();
 
         // 결제 요청 생성
-        PaymentRequest paymentRequest = PaymentRequest.builder()
+        PaymentRequestDto paymentRequest = PaymentRequestDto.builder()
                 .storeId(storeId)
                 .orderName("매점 결제_" + cinema.getName())
                 .totalPayAmount(totalPrice.intValue())
@@ -78,7 +79,7 @@ public class PurchaseService {
                 .customData("{\"cinema\":\"" + cinema.getName() + "\"}")
                 .build();
 
-        PaymentResponse paymentResponse = paymentClient.requestPayment(paymentId, paymentRequest);
+        PaymentResponseDto paymentResponse = paymentClient.requestPayment(paymentId, paymentRequest);
 
         // 결제 실패 시 롤백
         if (paymentResponse == null || paymentResponse.getPaymentId() == null) {
@@ -89,6 +90,7 @@ public class PurchaseService {
         Purchase purchase = Purchase.builder()
                 .user(user)
                 .cinema(cinema)
+                .paymentId(paymentResponse.getPaymentId())
                 .totalPrice(totalPrice)
                 .build();
         purchaseRepository.save(purchase);
@@ -104,6 +106,32 @@ public class PurchaseService {
         }
 
         return purchase.getId();
+    }
+
+    @Transactional
+    public void cancelPurchase(Long purchaseId) {
+        Purchase purchase = purchaseRepository.findById(purchaseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.PURCHASE_NOT_FOUND));
+
+        // Payment 취소 요청
+        String paymentId = purchase.getPaymentId();
+        if (paymentId == null) {
+            throw new CustomException(ErrorCode.PAYMENT_NOT_FOUND);
+        }
+
+        PaymentCancelResponseDto cancelResponse = paymentClient.cancelPayment(paymentId);
+
+        // 재고 복구
+        for (PurchaseDetail detail : purchaseDetailRepository.findByPurchase(purchase)) {
+            Inventory inventory = inventoryRepository.findByCinemaAndItemForUpdate(
+                    purchase.getCinema(), detail.getItem()
+            ).orElseThrow(() -> new CustomException(ErrorCode.INVENTORY_NOT_FOUND));
+
+            inventory.increaseQuantity(detail.getQuantity());
+        }
+
+        // 상태 CANCELED로 바꿈
+        purchase.cancel();
     }
 
     private String generatePaymentId() {

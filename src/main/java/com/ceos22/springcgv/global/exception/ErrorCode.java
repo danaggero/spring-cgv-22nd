@@ -45,11 +45,16 @@ public enum ErrorCode {
     // INVENTORY ERROR 46xx
     INVENTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "INVENTORY_4601", "재고 정보를 찾을 수 없습니다."),
 
-    // BOOKING ERROR 5xxx
+    // BOOKING ERROR 51xx
     BOOKING_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKING_5101", "예매된 좌석이 없습니다."),
 
-    // PAYMENT ERROR 6xxx
-    PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_6101", "결제 요청이 실패했습니다.");
+    // PAYMENT ERROR 61xx
+    PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_6101", "결제 요청이 실패했습니다."),
+    PAYMENT_CANCEL_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_6102", "결제 취소 요청이 실패했습니다."),
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_6103", "결제 내역을 찾을 수 없습니다."),
+
+    // PURCHASE ERROR 66xx
+    PURCHASE_NOT_FOUND(HttpStatus.NOT_FOUND, "PURCHASE_6601", "결제 내역을 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

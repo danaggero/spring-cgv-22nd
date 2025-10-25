@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class PaymentResponse {
+public class PaymentResponseDto {
     private String paymentId;
     private String paidAt;
 }

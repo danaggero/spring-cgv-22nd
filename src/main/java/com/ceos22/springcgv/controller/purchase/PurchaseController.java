@@ -7,10 +7,7 @@ import com.ceos22.springcgv.service.purchase.PurchaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +27,19 @@ public class PurchaseController {
         Long purchaseId = purchaseService.createPurchase(currentUserId, requestDto);
 
         ApiResponse<Long> response = ApiResponse.success(201, "상품 구매에 성공했습니다.", purchaseId);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 매점 상품 구매 취소
+     * @param 상품 구매 ID
+     * @return
+     */
+    @PostMapping("/{purchaseId}/cancel")
+    public ResponseEntity<ApiResponse<Void>> cancelPurchase(@PathVariable Long purchaseId) {
+        purchaseService.cancelPurchase(purchaseId);
+
+        ApiResponse<Void> response = ApiResponse.success(200, "결제가 취소되었습니다.");
         return ResponseEntity.ok(response);
     }
 }
