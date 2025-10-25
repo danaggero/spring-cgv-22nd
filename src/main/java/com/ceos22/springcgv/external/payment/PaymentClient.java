@@ -3,70 +3,27 @@ package com.ceos22.springcgv.external.payment;
 import com.ceos22.springcgv.dto.payment.PaymentCancelResponseDto;
 import com.ceos22.springcgv.dto.payment.PaymentRequestDto;
 import com.ceos22.springcgv.dto.payment.PaymentResponseDto;
-import com.ceos22.springcgv.global.exception.CustomException;
-import com.ceos22.springcgv.global.exception.ErrorCode;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
-@Slf4j
-@Component
-@RequiredArgsConstructor
-public class PaymentClient {
+@FeignClient(
+        name = "paymentClient",
+        url = "${payment.base-url}",
+        configuration = PaymentFeignConfig.class
+)
+public interface PaymentClient {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    @PostMapping(value = "/payments/{paymentId}/instant", consumes = MediaType.APPLICATION_JSON_VALUE)
+    PaymentResponseDto requestPayment(
+            @PathVariable("paymentId") String paymentId,
+            @RequestBody PaymentRequestDto request
+    );
 
-    @Value("${payment.base-url}")
-    private String paymentBaseUrl;
-
-    @Value("${payment.api-secret}")
-    private String paymentApiSecret;
-
-    public PaymentResponseDto requestPayment(String paymentId, PaymentRequestDto request) {
-        String url = paymentBaseUrl + "/payments/" + paymentId + "/instant";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(paymentApiSecret);
-
-        HttpEntity<PaymentRequestDto> entity = new HttpEntity<>(request, headers);
-
-        try {
-            ResponseEntity<PaymentResponseDto> response = restTemplate.exchange(
-                    url, HttpMethod.POST, entity, PaymentResponseDto.class);
-
-            return response.getBody();
-
-        } catch (Exception e) {
-            log.error("결제 요청 실패: {}", e.getMessage());
-            throw new CustomException(ErrorCode.PAYMENT_FAILED);
-        }
-    }
-
-    public PaymentCancelResponseDto cancelPayment(String paymentId) {
-        String url = paymentBaseUrl + "/payments/" + paymentId + "/cancel";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(paymentApiSecret);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-
-        try {
-            ResponseEntity<PaymentCancelResponseDto> response = restTemplate.exchange(
-                    url, HttpMethod.POST, entity, PaymentCancelResponseDto.class);
-            return response.getBody();
-
-        } catch (HttpStatusCodeException e) {
-            log.error("[결제 취소 실패] status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new CustomException(ErrorCode.PAYMENT_CANCEL_FAILED);
-        } catch (Exception e) {
-            log.error("[결제 취소 요청 중 예외 발생] {}", e.getMessage());
-            throw new CustomException(ErrorCode.PAYMENT_CANCEL_FAILED);
-        }
-    }
+    @PostMapping(value = "/payments/{paymentId}/cancel", consumes = MediaType.APPLICATION_JSON_VALUE)
+    PaymentCancelResponseDto cancelPayment(
+            @PathVariable("paymentId") String paymentId
+    );
 }
