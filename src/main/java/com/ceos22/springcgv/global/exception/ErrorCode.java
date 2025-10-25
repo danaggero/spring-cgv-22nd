@@ -38,7 +38,6 @@ public enum ErrorCode {
     // SHOWING ERROR 36xx
     SHOWING_NOT_FOUND(HttpStatus.NOT_FOUND, "SHOWING_3601", "상영 정보를 찾을 수 없습니다."),
 
-
     // SNACK ERROR 41xx
     SNACK_NO_STOCK(HttpStatus.BAD_REQUEST, "SNACK_4101", "상품 재고가 부족합니다."),
     SNACK_NOT_FOUND(HttpStatus.NOT_FOUND, "SNACK_4102", "상품을 찾을 수 없습니다."),
@@ -47,7 +46,10 @@ public enum ErrorCode {
     INVENTORY_NOT_FOUND(HttpStatus.NOT_FOUND, "INVENTORY_4601", "재고 정보를 찾을 수 없습니다."),
 
     // BOOKING ERROR 5xxx
-    BOOKING_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKING_5101", "예매된 좌석이 없습니다.");
+    BOOKING_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOKING_5101", "예매된 좌석이 없습니다."),
+
+    // PAYMENT ERROR 6xxx
+    PAYMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PAYMENT_6101", "결제 요청이 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
