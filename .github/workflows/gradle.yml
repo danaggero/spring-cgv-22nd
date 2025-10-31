@@ -1,11 +1,9 @@
-name: Deploy Development Server
+name: CI/CD Deploy to EC2
 
-## develop 브랜치에 push가 되면 실행됩니다
 on:
   push:
     branches: [ "develop" ]
 
-## 이 workflow가 GitHub repository의 내용을 읽을 수 있도록 설정합니다.
 permissions:
   contents: read
 
@@ -14,69 +12,44 @@ jobs:
     runs-on: ubuntu-latest ## runner
     steps:
 
-      ## step 1. 현재 리포지토리의 코드를 체크아웃합니다.
       - name: checkout
         uses: actions/checkout@v3
 
-      ## step2. JDK 11 환경을 설정합니다. (Temurin은 OpenJDK 배포판입니다)
-      ## 여러분이 사용하는 버전을 사용하세요
-      - name: Set up JDK 11
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'temurin'
 
-      ## step3. Gradle로 Spring Boot 애플리케이션을 빌드하여 bootJar를 생성합니다.
-      - name: Build with Gradle
+      - name: Build Spring Boot JAR
         run: ./gradlew bootJar
 
 
-      ## step4. 애플리케이션 이미지, Nginx 이미지를 빌드하고 Docker Hub에 푸시합니다.
-      - name: web docker build and push
+      - name: Login to DockerHub
         run: |
-          # Docker Hub에 로그인
-           docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-          
-           # 웹 애플리케이션용 Docker 이미지 빌드 및 푸시
-           docker build -t my-repo/my-web-image .
-           docker push my-repo/my-web-image
-          
-           # Nginx용 Docker 이미지 빌드 및 푸시
-           docker build -f dockerfile-nginx -t my-repo/my-nginx-image .
-           docker push my-repo/my-nginx-image
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-      ## step5. 원격 서버(EC2)에 SSH로 접속해 배포를 수행합니다.
-      - name: executing remote ssh commands using password
+      - name: Build Docker Image & Push
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/spring-app .
+          docker push ${{ secrets.DOCKER_USERNAME }}/spring-app
+
+      - name: Build Nginx Image & Push
+        run: |
+          docker build -f nginx/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/nginx-proxy .
+          docker push ${{ secrets.DOCKER_USERNAME }}/nginx-proxy
+
+
+      - name: Deploy to EC2 (SSH)
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}    # EC2 호스트 주소
-          username: ubuntu             # 로그인할 사용자
-          key: ${{ secrets.KEY }}      # 개인 키 (.pem)
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
           script: |
-            
-            ## 홈 디렉토리로 이동
-             cd /home/ubuntu/
-            
-             ## .env 환경변수 파일 생성
-             sudo touch .env
-             echo "${{ secrets.ENV_VARS }}" | sudo tee .env > /dev/null
-            
-            ## docker-compose.yaml 생성
-             sudo touch docker-compose.yaml
-             echo "${{ vars.DOCKER_COMPOSE }}" | sudo tee docker-compose.yaml > /dev/null
-            
-            ## docker-compose 실행 준비
-             sudo chmod 666 /var/run/docker.sock    # 도커 명령어 실행을 위한 권한 설정
-            
-             ## 실행 중인 컨테이너 전부 종료 및 삭제
-             sudo docker rm -f $(docker ps -qa)
-            
-             ## 최신 Docker 이미지 풀링
-             sudo docker pull my-repo/my-web-image
-             sudo docker pull my-repo/my-nginx-image
-            
-             ## docker-compose를 통해 컨테이너 실행
-             docker-compose -f docker-compose.yaml --env-file ./.env up -d
-            
-             ## 사용하지 않는 이미지 정리
-             docker image prune -f
+            cd /home/ubuntu/app
+            sudo docker compose down || true
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/spring-app
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/nginx-proxy
+            sudo docker compose up -d --force-recreate
+            sudo docker system prune -f
