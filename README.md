@@ -1238,3 +1238,227 @@ Redis는 여러 서버 인스턴스가 하나의 Redis를 공유하므로 **분�
 - Spring Cloud OpenFeign 라이브러리 기반
 - 장점: 선언형이라 코드가 간결, 재사용성 높음
 - 단점: 추가 의존성 필요, 버전 호환 이슈 있음
+
+
+---
+
+# Deploy
+
+## Docker
+
+### 트러블 슈팅
+```jsx
+2025-10-31T01:50:12.939Z INFO 1 --- [ main] com.zaxxer.hikari.HikariDataSource : HikariPool-1 - Starting... 
+2025-10-31T01:50:12.946Z ERROR 1 --- [ main] j.LocalContainerEntityManagerFactoryBean : Failed to initialize JPA EntityManagerFactory: [PersistenceUnit: default] Unable to build Hibernate SessionFactory; nested exception is java.lang.RuntimeException: Driver com.mysql.cj.jdbc.Driver claims to not accept jdbcUrl, ${DB_URL}
+```
+- 환경 변수를 읽지 못하고 ${DB_URL} 값이 그대로 문자열로 들어오는 문제 발생
+
+- .env 안에는 DB 비밀번호, API 키 같은 민감정보가 있음
+- 이미지 안에 포함시키면 Docker Hub에서 유출될 위험이 있음
+- 따라서 .env 파일은 이미지 빌드 시 포함되지 않음
+- 빌드(Build) 시점에는 제외하고, 실행(Runtime) 시점에 주입하는 것이 원칙
+
+```
+docker run --env-file .env spring-app
+```
+- EC2에서 컨테이너 실행할 때 환경 변수 주입
+
+### 왜 .jar 파일이 두 개 생길까? 어떤 걸 Docker build 해야 할까?
+
+- Gradle이 jar + bootJar 둘 다 생성
+- jar (일반 JAR): 순수 Java 클래스 + 리소스만 포함된 기본 JAR
+  - 실행 엔트리포인트가 없음
+  - SNAPSHOT-plain.jar
+- bootJar (Spring Boot 실행 JAR): Spring Boot 앱을 실행할 수 있는 실행형 JAR
+  - Spring Boot 실행에 필요한 모든 것 + 실행 스크립트가 포함
+  - SNAPSHOT.jar
+
+따라서 Docker에서 실행하기 위해선 bootJar인 SNAPSHOT.jar를 Docker build 해야한다.
+- gradle에서 plain.jar를 생성하지 않도록 설정하기도 함
+
+---
+
+## Docker Compose
+
+- 여러 컨테이너(여러 이미지 기반)를 하나의 서비스 스택으로 묶고,
+
+- **한 명령으로 실행/중지/관리**할 수 있게 해주는 도구
+
+### 예시
+- Spring Boot Backend (컨테이너 1)
+- MySQL Database (컨테이너 2)
+- Redis cache (컨테이너 3)
+- Nginx reverse proxy (컨테이너 4)
+<br></br> 
+- 각각 docker run
+```
+docker run ...
+docker run ...
+docker run ...
+docker run ...
+```
+- docker compose 사용
+```
+docker compose up -d
+```
+
+### EC2 내 docker-compose.yml
+```
+version: "3.8"
+
+services:
+app:
+image: danaggero/deploy-test
+container_name: cgv-clone
+ports:
+- "80:8080"
+env_file:
+- .env
+restart: always
+```
+
+사진
+
+```jsx
+2025-10-31T14:18:59.563Z ERROR 1 --- [nio-8080-exec-1] c.c.s.g.e.GlobalExceptionHandler : 예상치 못한 에러 발생: org.springframework.web.servlet.resource.NoResourceFoundException: No static resource .
+```
+
+정적 파일이 없어서 발생하는 정상적인 에러
+
+---
+
+## CICD
+
+### Github Action
+.github/workflows/deploy.yml
+```jsx
+name: CI/CD Deploy to EC2
+
+on:
+  push:
+    branches: [ "develop" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build Spring Boot JAR
+        run: ./gradlew bootJar
+
+
+      - name: Login to DockerHub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image & Push
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/spring-app .
+          docker push ${{ secrets.DOCKER_USERNAME }}/spring-app
+
+      - name: Build Nginx Image & Push
+        run: |
+          docker build -f nginx/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/nginx-proxy .
+          docker push ${{ secrets.DOCKER_USERNAME }}/nginx-proxy
+
+
+      - name: Deploy to EC2 (SSH)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /home/ubuntu/app
+            sudo docker compose down || true
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/spring-app
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/nginx-proxy
+            sudo docker compose up -d --force-recreate
+            sudo docker system prune -f
+```
+
+## CI (Continuous Integration)
+- 코드를 자동으로 빌드하고 Docker 이미지로 패키징
+- Docker Hub에 push하여 배포 준비 완료
+```dockerfile
+
+      - name: Build Spring Boot JAR
+        run: ./gradlew bootJar
+
+      - name: Login to DockerHub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image & Push
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/spring-app .
+          docker push ${{ secrets.DOCKER_USERNAME }}/spring-app
+
+      - name: Build Nginx Image & Push
+        run: |
+          docker build -f nginx/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/nginx-proxy .
+          docker push ${{ secrets.DOCKER_USERNAME }}/nginx-proxy
+```
+
+파이프라인
+```
+Spring Boot 빌드 (bootJar)
+↓
+Docker 로그인
+↓
+Spring 이미지 build & push
+↓
+Nginx 이미지 build & push
+```
+
+### CD (Continuous Deployment)
+- EC2에서 최신 Docker 이미지를 pull
+- 컨테이너 재시작 및 배포 자동화
+```dockerfile
+      - name: Deploy to EC2 (SSH)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}
+          script: |
+            cd /home/ubuntu/app
+            sudo docker compose down || true
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/spring-app
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/nginx-proxy
+            sudo docker compose up -d --force-recreate
+            sudo docker system prune -f
+```
+파이프라인
+```
+EC2 서버 접속
+↓
+프로젝트 디렉토리로 이동
+↓
+기존 컨테이너 종료 및 제거
+↓
+최신 Spring 이미지 pull
+↓
+최신 Nginx 이미지 pull
+↓
+컨테이너 재배포
+↓
+Docker 캐시 정리
+```
+
+결과
