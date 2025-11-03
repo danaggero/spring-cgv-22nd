@@ -1306,6 +1306,20 @@ docker run ...
 ```
 docker compose up -d
 ```
+### 쿠버네티스?
+![k8s-vs-compose-fig-01.png](images/k8s-vs-compose-fig-01.png)
+Docker Compose
+- 한 서버 안에서 여러 컨테이너를 띄움
+- ex) 웹 서버 + DB + Redis를 한 서버 내에서 실행
+- 개발/소규모 서비스에 적합
+
+Kubernetes
+- 여러 서버(Worker Node)에 컨테이너를 분산해서 실행
+- 중앙에 Control Plane이 있고 각 노드들을 관리
+- 장애나 트래픽 증가하면:
+  - 컨테이너 자동 재시작
+  - 노드에 자동 분배
+  - 인스턴스(컨테이너) 수 자동 확장
 
 ### EC2 내 docker-compose.yml
 ```
