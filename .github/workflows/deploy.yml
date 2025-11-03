@@ -1,8 +1,8 @@
-name: CI/CD Deploy to EC2
+name: CGV CI/CD Deploy
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: [ "master" ]
 
 permissions:
   contents: read
@@ -24,6 +24,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Run tests
+        run: ./gradlew test --continue
+
       - name: Build Spring Boot JAR
         run: ./gradlew bootJar
 
@@ -34,13 +37,13 @@ jobs:
 
       - name: Build Docker Image & Push
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/spring-app .
-          docker push ${{ secrets.DOCKER_USERNAME }}/spring-app
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/spring-app:${{ github.sha }} .
+          docker push ${{ secrets.DOCKER_USERNAME }}/spring-app:${{ github.sha }}
 
       - name: Build Nginx Image & Push
         run: |
-          docker build -f nginx/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/nginx-proxy .
-          docker push ${{ secrets.DOCKER_USERNAME }}/nginx-proxy
+          docker build -f nginx/Dockerfile -t ${{ secrets.DOCKER_USERNAME }}/nginx-proxy:${{ github.sha }} .
+          docker push ${{ secrets.DOCKER_USERNAME }}/nginx-proxy:${{ github.sha }}
 
 
       - name: Deploy to EC2 (SSH)
