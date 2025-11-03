@@ -1263,7 +1263,12 @@ docker run --env-file .env spring-app
 ```
 - EC2에서 컨테이너 실행할 때 환경 변수 주입
 
+<img width="1262" height="534" alt="다운로드" src="https://github.com/user-attachments/assets/915c617f-f13c-4c09-b8ec-bf73f784d89b" />
+
 ### 왜 .jar 파일이 두 개 생길까? 어떤 걸 Docker build 해야 할까?
+
+<img width="392" height="96" alt="두개의 jar" src="https://github.com/user-attachments/assets/cd881a03-bbf5-4d6d-890c-f302611e49a7" />
+
 
 - Gradle이 jar + bootJar 둘 다 생성
 - jar (일반 JAR): 순수 Java 클래스 + 리소스만 포함된 기본 JAR
@@ -1317,7 +1322,8 @@ env_file:
 restart: always
 ```
 
-사진
+<img width="955" height="178" alt="화면 캡처 2025-11-01 113019" src="https://github.com/user-attachments/assets/36735fc3-8ec1-4aef-8ece-b928f2e02f89" />
+
 
 ```jsx
 2025-10-31T14:18:59.563Z ERROR 1 --- [nio-8080-exec-1] c.c.s.g.e.GlobalExceptionHandler : 예상치 못한 에러 발생: org.springframework.web.servlet.resource.NoResourceFoundException: No static resource .
@@ -1462,3 +1468,4 @@ Docker 캐시 정리
 ```
 
 결과
+<img width="1501" height="737" alt="github action 결과" src="https://github.com/user-attachments/assets/bc35d6e5-fd4b-4104-9e77-3880d3eccf72" />
