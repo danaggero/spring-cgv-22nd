@@ -50,7 +50,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_KEY }}
           script: |
-            cd /home/ubuntu/app
+            cd /home/ubuntu/cgv-clone
             sudo docker compose down || true
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/spring-app
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/nginx-proxy
