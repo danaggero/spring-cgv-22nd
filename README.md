@@ -1490,4 +1490,9 @@ Docker 캐시 정리
 
 ![ceos-cgv.drawio.png](images/ceos-cgv.drawio.png)
 
---
+---
+# 부하테스트
+
+### EC2 내부에서 K6 실행
+![ec2 내부 그래프.png](images/ec2%20%EB%82%B4%EB%B6%80%20%EA%B7%B8%EB%9E%98%ED%94%84.png)
+
