@@ -1483,3 +1483,11 @@ Docker 캐시 정리
 
 결과
 <img width="1501" height="737" alt="github action 결과" src="https://github.com/user-attachments/assets/bc35d6e5-fd4b-4104-9e77-3880d3eccf72" />
+
+---
+
+# CGV 서비스 아키텍처 구조도
+
+![ceos-cgv.drawio.png](images/ceos-cgv.drawio.png)
+
+--
