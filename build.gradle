@@ -53,7 +53,7 @@ AWS 리소스 기본 메트릭(CPU/Memory 등)만 모니터링한다면 추가�
 
 	// /actuator/health, /actuator/metrics 등 엔드포인트 제공
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'io.micrometer:micrometer-registry-prometheus'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {

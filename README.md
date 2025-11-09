@@ -1488,7 +1488,7 @@ Docker 캐시 정리
 
 # CGV 서비스 아키텍처 구조도
 ![ceos-cgv.drawio.png](images/ceos-cgv.drawio.png)
-
+- Grafana, Prometheus 제외
 ---
 # 부하테스트
 ## Grafana & Prometheus 추가
@@ -1553,3 +1553,6 @@ export const options = {
 - 병목 현상 발생
 
 ![ec2 CPU.png](images/ec2%20CPU.png)
+- 병목 현상이 발생하는 곳에 EC2 instance의 CPU 점유율이 90% 이상인 구간 발생
+- EC2에 부하가 일어났음을 알 수 있다.
+- Prometheus에서 spring container에 대한 부하를 탐색하고 싶었지만 하지 못하였다...
