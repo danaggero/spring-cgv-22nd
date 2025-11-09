@@ -1487,13 +1487,29 @@ Docker 캐시 정리
 ---
 
 # CGV 서비스 아키텍처 구조도
-
 ![ceos-cgv.drawio.png](images/ceos-cgv.drawio.png)
 
 ---
 # 부하테스트
 
+## 스크립트
+```javascript
+export const options = {
+  stages: [
+    { duration: "2m", target: 100 },
+    { duration: "2m", target: 200 },
+    { duration: "2m", target: 400 },
+    { duration: "2m", target: 600 },
+    { duration: "2m", target: 800 },
+    { duration: "2m", target: 1000 },
+  ],
+};
+```
+- 총 6단계로 구성
+- 각 단계마다 2분씩 virtual users 를 점진적으로 늘려가면서 테스트
+
 ### EC2 내부에서 K6 실행
+
 ![ec2 내부 그래프.png](images/ec2%20%EB%82%B4%EB%B6%80%20%EA%B7%B8%EB%9E%98%ED%94%84.png)
 
 ### Local에서 K6 실행
