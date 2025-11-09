@@ -115,7 +115,14 @@ public class GlobalExceptionHandler {
      * 기타 모든 예외 처리
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception e) {
+    public ResponseEntity<ApiResponse<Void>> handleGlobalException(Exception e, HttpServletRequest request) {
+        String uri = request.getRequestURI();
+
+        // Prometheus나 Actuator 요청은 그냥 통과시킴
+        if (uri.startsWith("/actuator")) {
+            throw new RuntimeException(e);
+        }
+
         log.error("예상치 못한 에러 발생: ", e);
 
         ApiResponse<Void> response = ApiResponse.failure(
