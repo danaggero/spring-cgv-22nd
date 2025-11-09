@@ -1491,6 +1491,22 @@ Docker 캐시 정리
 
 ---
 # 부하테스트
+## Grafana & Prometheus 추가
+```gradle
+global:
+  scrape_interval: 5s  # 5초마다 데이터 수집
+
+scrape_configs:
+  - job_name: "node_exporter"
+    static_configs:
+      - targets: ["node_exporter:9100"]
+
+  - job_name: "spring"
+    metrics_path: "/actuator/prometheus"
+    static_configs:
+      - targets: ["spring:8080"]
+```
+- prometheus.yml 작성
 
 ## 스크립트
 ```javascript
@@ -1512,5 +1528,25 @@ export const options = {
 
 ![ec2 내부 그래프.png](images/ec2%20%EB%82%B4%EB%B6%80%20%EA%B7%B8%EB%9E%98%ED%94%84.png)
 
+### EC2와 Local 중 어디에서 script를 실행하는 것이 좋을까?
+- 처음에는 별 생각 없이 "당연히 EC2에 부하가 걸리니 EC2에서 script를 실행하는 것이 좋지"라고 생각했다.
+- 그런데 script를 실행하는 건 사용자이므로 Local에서 script를 실행하는 것이 더 실제와 가깝다.
+```
+[EC2 서버 내부]   (k6 실행)
+  k6 run → localhost:8080 → Nginx → Spring → DB
+```
+- End-to-End 사용자 경험 테스트에 적합
+```
+ [로컬 PC]         [EC2 서버]
+  k6 run → HTTP 요청 → Nginx → Spring → DB
+```
+- 서버 자체 성능 테스트에 적합
+
 ### Local에서 K6 실행
+![local k6 summary.png](images/local%20k6%20summary.png)
+- http_req_duration
+  - max=15s
+- http_req_waiting
+  - max=15s
+
 ![local graph.png](images/local%20graph.png)
