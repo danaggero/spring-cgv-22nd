@@ -1550,3 +1550,6 @@ export const options = {
   - max=15s
 
 ![local graph.png](images/local%20graph.png)
+- 병목 현상 발생
+
+![ec2 CPU.png](images/ec2%20CPU.png)
