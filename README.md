@@ -2,7 +2,8 @@
 CEOS 22기 백엔드 스터디 - CGV 클론 코딩 프로젝트
 
 
-# DB 모델링
+# DB
+모델링
 ## 1. 요구사항 분석하기 & 엔티티 정의하기
 
 ---
@@ -1512,7 +1513,6 @@ scrape_configs:
 ```javascript
 export const options = {
   stages: [
-    { duration: "2m", target: 100 },
     { duration: "2m", target: 200 },
     { duration: "2m", target: 400 },
     { duration: "2m", target: 600 },
@@ -1525,8 +1525,28 @@ export const options = {
 - 각 단계마다 2분씩 virtual users 를 점진적으로 늘려가면서 테스트
 
 ### EC2 내부에서 K6 실행
+![inside ec2 graph.png](images/inside%20ec2%20graph.png)
+- 결과
 
-![ec2 내부 그래프.png](images/ec2%20%EB%82%B4%EB%B6%80%20%EA%B7%B8%EB%9E%98%ED%94%84.png)
+![inside ec2 vu graph .png](images/inside%20ec2%20vu%20graph%20.png)
+- VUS가 증가하는데 http_request가 감소하는 구간 발생
+- 서버 응답 처리 속도가 점차 느려지고 있음을 시사
+- 병목 구간 발생
+- VU가 300까지밖에 찍히지 않음
+- 그 후엔 응답 불능 상태
+
+![inside ec2 cpu.png](images/inside%20ec2%20cpu.png)
+- CPU
+
+![inside ec2 memory.png](images/inside%20ec2%20memory.png)
+- Memory
+- 예상 시나리오
+  - VU 상승 (요청 폭주)
+  - 스레드 풀 포화 -> 대기 큐에 요청 객체 쌓임 (메모리 점유)
+  - 힙 공간 부족 -> Garbage Collector로 CPU 사용
+  - Full GC 발생 -> CPU 100% 점유
+  - Stop-the-world (GC 동안 모든 스레드가 멈춤 -> 요청 처리 중단)
+  - 모든 요청 응답 불가
 
 ### EC2와 Local 중 어디에서 script를 실행하는 것이 좋을까?
 - 처음에는 별 생각 없이 "당연히 EC2에 부하가 걸리니 EC2에서 script를 실행하는 것이 좋지"라고 생각했다.
@@ -1556,3 +1576,5 @@ export const options = {
 - 병목 현상이 발생하는 곳에 EC2 instance의 CPU 점유율이 90% 이상인 구간 발생
 - EC2에 부하가 일어났음을 알 수 있다.
 - Prometheus에서 spring container에 대한 부하를 탐색하고 싶었지만 하지 못하였다...
+
+![prometheus.png](images/prometheus.png)
