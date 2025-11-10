@@ -1574,7 +1574,9 @@ export const options = {
 
 ![ec2 CPU.png](images/ec2%20CPU.png)
 - 병목 현상이 발생하는 곳에 EC2 instance의 CPU 점유율이 90% 이상인 구간 발생
-- EC2에 부하가 일어났음을 알 수 있다.
+- CPU에 부하가 일어났음을 알 수 있다.
+- Memory는 60%대로 안정적 
+
 - Prometheus에서 spring container에 대한 부하를 탐색하고 싶었지만 하지 못하였다...
 
 ![prometheus.png](images/prometheus.png)
