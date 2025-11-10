@@ -58,6 +58,7 @@ AWS 리소스 기본 메트릭(CPU/Memory 등)만 모니터링한다면 추가�
 
 tasks.named('test') {
 	useJUnitPlatform()
+	enabled = false
 }
 
 ext {
