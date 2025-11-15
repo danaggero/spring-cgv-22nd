@@ -1767,7 +1767,7 @@ ORDER BY booking_rate DESC
 LIMIT 10;
 ```
 
-![image.png](attachment:26976dc3-58f5-4978-9e04-f5127eea25aa:image.png)
+<img width="858" height="65" alt="1-1" src="https://github.com/user-attachments/assets/20a09f34-48a5-4ece-b76c-9a5434dee96f" />
 
 - type : ALL
   - Full Table Scan 수행
@@ -1813,12 +1813,14 @@ EXPLAIN
 SELECT * FROM movies WHERE age_rating = 'AGE19';
 ```
 
+<img width="860" height="58" alt="quert2-1" src="https://github.com/user-attachments/assets/97ac1dc7-6396-43eb-ad92-9c0f00be73db" />
 
 - type : ALL
   - Full Table Scan 수행
 - filtered = 20
   - 필터링 비율 20% 예측
 
+<img width="1505" height="57" alt="2-2" src="https://github.com/user-attachments/assets/ef6df10b-0fd9-4d5c-b3bc-3630ed590095" />
 
 - actual time=0.027 .. 0.311
   - 걸린 시간 0.311ms
@@ -1835,6 +1837,7 @@ CREATE INDEX idx_age_rating ON movies(age_rating);
 
 ### 결과
 
+<img width="1097" height="62" alt="2-3" src="https://github.com/user-attachments/assets/2811d29e-fa48-4257-9e37-41a58229464f" />
 
 - type: ref
   - 동등 조건(=)을 인덱스로 조회할 때 나오는 타입
@@ -1842,6 +1845,7 @@ CREATE INDEX idx_age_rating ON movies(age_rating);
 - filtered = 100
   - 예상 필터링 비율 100% row
 
+<img width="1611" height="50" alt="2-4" src="https://github.com/user-attachments/assets/89c1704f-b0ad-4d36-ad53-1259a406bd88" />
 
 - actual time=0.0258..0.144
   - 걸린 시간 0.144ms
@@ -1856,6 +1860,7 @@ SELECT * FROM movies
 WHERE age_rating = 'ALL' AND runtime < 120;
 ```
 
+<img width="847" height="57" alt="explain age" src="https://github.com/user-attachments/assets/fe13e18e-f762-4023-a192-363d5f71334c" />
 
 - type : ALL
   - Full Table Scan 수행
@@ -1870,6 +1875,7 @@ WHERE age_rating = 'ALL' AND runtime < 120;
 - Extra = Using where
   - 필터 조건(age_rating + runtime)을 통해 추가 필터링 적용
 
+<img width="1428" height="67" alt="explain analyze age" src="https://github.com/user-attachments/assets/dfd2c1de-1ec2-480c-b61f-54f5930edbda" />
 
 ```jsx
 > Filter: ((movies.age_rating = 'ALL') and (movies.runtime < 120)) (cost=31.7 rows=20.5) (actual time=0.0348..0.323 rows=20 loops=1)
@@ -1890,12 +1896,14 @@ ON movies (age_rating, runtime);
 
 결과
 
+<img width="1497" height="58" alt="explain analyze age and runtime" src="https://github.com/user-attachments/assets/d7df01f0-72a1-4d07-88aa-6e56a3d248f1" />
 
 ```jsx
 -> Index range scan on movies using idx_movies_age_runtime over (age_rating = 'ALL' AND runtime < 120),
  with index condition: ((movies.age_rating = 'ALL') and (movies.runtime < 120))  (cost=9.26 rows=20) (actual time=0.0355..0.12 rows=20 loops=1)
 
 ```
+
 
 - actual time=0.0355..0.12
 - rows=20
